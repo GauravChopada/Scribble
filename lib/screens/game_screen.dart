@@ -117,8 +117,7 @@ class _gameScreenState extends State<gameScreen> {
 
     widget.socket.emit("getSdkToken");
 
-    widget.socket.on(
-        "getSdkTokenResponse",
+    widget.socket.on("getSdkTokenResponse",
         (data) => {
               print("...................getSdkTokenResponse : " + data),
               Provider.of<gameProvider>(context, listen: false)
@@ -129,8 +128,7 @@ class _gameScreenState extends State<gameScreen> {
               getRooomUUID(SDKTOKEN)
             });
 
-    widget.socket.on(
-        "getRoomTokenResponse",
+    widget.socket.on("getRoomTokenResponse",
         (data) => {
               print("...................getRoomTokenResponse : " + data),
               Provider.of<gameProvider>(context, listen: false)
@@ -144,16 +142,14 @@ class _gameScreenState extends State<gameScreen> {
               _isLoading1 = false
             });
 
-    widget.socket.on(
-        "startGameResponse",
+    widget.socket.on("startGameResponse",
         (data) => {
               print("got startGameResponse... + " + data.toString()),
               Provider.of<gameProvider>(context, listen: false)
                   .setCurrentTurn(data, widget.socket.id.toString()),
             });
 
-    widget.socket.on(
-        "nextTurnResponse",
+    widget.socket.on("nextTurnResponse",
         (data) => {
               print("got nextTurnResponse...+ " + data.toString()),
               Provider.of<gameProvider>(context, listen: false)
@@ -161,16 +157,14 @@ class _gameScreenState extends State<gameScreen> {
               startTimer(),
             });
 
-    widget.socket.on(
-        "choseWordResponse",
+    widget.socket.on("choseWordResponse",
         (data) => {
               print("got choseWordResponse...+ " + data.toString()),
               Provider.of<gameProvider>(context, listen: false)
                   .setselectedWord(data),
             });
 
-    widget.socket.on(
-        "receiveMessage",
+    widget.socket.on("receiveMessage",
         (data) => {
               Provider.of<gameProvider>(context, listen: false)
                   .addNewMessage(data),
@@ -180,8 +174,6 @@ class _gameScreenState extends State<gameScreen> {
   void getRooomUUID(String sdkToken) async {
     print("getRooomUUID : " + sdkToken);
 
-    var token =
-        "NETLESSSDK_YWs9RzhDNWRCR0RPUDhsZFVWbyZub25jZT0yNWU3MjE1MC04MWVkLTExZWQtODYzMS1hNzA1MzkzY2M0YTkmcm9sZT0wJnNpZz1jODIzODQ4NDUyY2M4ZTU1Nzc4NWVhNmZkMTI1ODZmMjk4ZjBjZDJhYWZlMjFlMGM2YTZkM2NiMzlmODFiNzE2";
     var response = await http.post(Uri.https('api.netless.link', 'v5/rooms'),
         headers: {'token': sdkToken.toString(), 'region': 'in-mum'});
     var jsonResponse =

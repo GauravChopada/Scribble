@@ -28,11 +28,10 @@ class _homeScreenState extends State<homeScreen> {
 
   void connect() {
     // print("1.");
-    socket = IO.io("http://192.168.1.100:5000", <String, dynamic>{
+    socket = IO.io("http://192.168.1.108:5000", <String, dynamic>{
       "transports": ["websocket"],
       "autoConnect": false
     });
-    // print("2. " + socket.id.toString());
     socket.connect();
 
     socket.onConnect(
@@ -40,13 +39,6 @@ class _homeScreenState extends State<homeScreen> {
     print(socket.connected);
     socket.emit("/test", "hello server");
 
-    // socket.on(
-    //     "success",
-    //     (data) => {
-    //           // print(data)
-    //           Provider.of<roomProvider>(context, listen: false)
-    //               .setMsg(data.toString())
-    //         });
   }
 
   @override

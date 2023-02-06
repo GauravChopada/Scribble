@@ -153,25 +153,25 @@ class _lobbyScreenState extends State<lobbyScreen> {
                 height: 15,
               ),
               Expanded(
-                  // height: 100,
                   child: Consumer<roomProvider>(builder: (_, provider, __) {
-                print(provider.players);
-                return ListView.separated(
-                  separatorBuilder: (context, index) => SizedBox(
-                    height: 5,
-                  ),
-                  itemCount: provider.players.length,
-                  itemBuilder: (context, index) {
-                    final player = provider.players[index];
-                    return Container(
-                        child: ListTile(
-                      leading: CircleAvatar(
-                        child: Icon(Icons.person),
+                    print(provider.players);
+                    return ListView.separated(
+                      separatorBuilder: (context, index) => const SizedBox(
+                        height: 5,
                       ),
-                      title: Text(player.playerName),
-                    ));
-                  },
-                );
+                      itemCount: provider.players.length,
+                      itemBuilder: (context, index) {
+                        final player = provider.players[index];
+                        // ignore: avoid_unnecessary_containers
+                        return Container(
+                            child: ListTile(
+                          leading: const CircleAvatar(
+                            child: Icon(Icons.person),
+                          ),
+                          title: Text(player.playerName),
+                        ));
+                      },
+                    );
               })),
 
               // Selector<roomProvider, String>(
