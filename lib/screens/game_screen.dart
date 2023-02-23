@@ -1,25 +1,32 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
+import 'package:scribble/models/whiteBoardCredentials.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 import 'package:fastboard_flutter/fastboard_flutter.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert' as convert;
 import '../providers/game_provider.dart';
+import 'package:scribble/providers/room_provider.dart';
+import 'dart:convert';
 
 class gameScreen extends StatefulWidget {
+  static const Routename = '/gameScreen';
   final IO.Socket socket;
-  final String roomId;
-  gameScreen({Key? key, required this.socket, required this.roomId})
-      : super(key: key);
+  String roomId = "";
+  gameScreen({
+    Key? key,
+    required this.socket,
+  }) : super(key: key);
 
   @override
   State<gameScreen> createState() => _gameScreenState();
 }
 
 class _gameScreenState extends State<gameScreen> {
-  var appId = "JlxeUIFeEe2GMacFOTzEqQ/3CFWFaY_cU4zxw";
+  String appId = dotenv.env['FASTBOARD_APP_ID']!;
   var roomUUID = "";
   var roomToken = "";
   var selectedWord = '';
@@ -28,13 +35,22 @@ class _gameScreenState extends State<gameScreen> {
   var _isLoading2 = true;
   var _isLoading1 = true;
   var _isFastRoomCompleted = false;
-
+  var response;
   int seconds = 20;
   Timer? timer;
   Completer<FastRoomController> controllerCompleter = Completer();
   final textFieldController = TextEditingController();
   late FastRoomController fastRoomController;
   GlobalKey _fastRoomKey = new GlobalKey();
+
+  showSnackBar(String message, Color color) {
+    return SnackBar(
+      backgroundColor: color,
+      closeIconColor: Colors.white,
+      showCloseIcon: true,
+      content: Text(message),
+    );
+  }
 
   startTimer() {
     seconds = 20;
@@ -43,11 +59,11 @@ class _gameScreenState extends State<gameScreen> {
         .addNewMessage(":New game started");
 
     if (_isFastRoomCompleted) {
-      if (Provider.of<gameProvider>(context, listen: false).yourTurn) {
-        fastRoomController.cleanScene();
-        fastRoomController.setWritable(true);
-      } else
-        fastRoomController.setWritable(false);
+      // if (Provider.of<gameProvider>(context, listen: false).yourTurn) {
+      //   fastRoomController.cleanScene();
+      fastRoomController.setWritable(true);
+      // } else
+      //   fastRoomController.setWritable(false);
     }
 
     timer = Timer.periodic(Duration(seconds: 1), (_t) {
@@ -67,7 +83,7 @@ class _gameScreenState extends State<gameScreen> {
     return await showDialog(
       context: context,
       builder: (context) {
-        return new AlertDialog(
+        return AlertDialog(
           title: Text("Choose one Word"),
           actions: [
             Column(
@@ -115,80 +131,95 @@ class _gameScreenState extends State<gameScreen> {
     // TODO: implement initState
     super.initState();
 
-    widget.socket.emit("getSdkToken");
-
-    widget.socket.on("getSdkTokenResponse",
-        (data) => {
-              print("...................getSdkTokenResponse : " + data),
-              Provider.of<gameProvider>(context, listen: false)
-                  .setSdkToken(data.toString()),
-              print("gameProvider().sdkToken : " +
-                  Provider.of<gameProvider>(context, listen: false)
-                      .getSdkToken()),
-              getRooomUUID(SDKTOKEN)
+    widget.socket.on(
+        "/getWhiteboardCredentialsResponse",
+        (payload) => {
+              response = json.decode(payload),
+              if (response["status"] == 200)
+                {
+                  Provider.of<roomProvider>(context, listen: false)
+                      .setWhiteboardCredentials(
+                          response["whiteboardCredentials"]),
+                  setState(() {
+                    _isLoading1 = false;
+                  }),
+                  // print("_isLoading1 = false"),
+                }
+              else
+                {
+                  ScaffoldMessenger.of(context).showSnackBar(showSnackBar(
+                      "Error.. Could not get whiteboard credentials",
+                      Colors.red))
+                }
             });
 
-    widget.socket.on("getRoomTokenResponse",
-        (data) => {
-              print("...................getRoomTokenResponse : " + data),
-              Provider.of<gameProvider>(context, listen: false)
-                  .setRoomToken(data.toString()),
-              widget.socket.emit("startGame", widget.roomId),
-              setState(() {
-                roomToken = Provider.of<gameProvider>(context, listen: false)
-                    .getRoomToken();
-                print("room Token ++++++++++++++++++++++" + roomToken);
-              }),
-              _isLoading1 = false
-            });
+    // widget.socket.on(
+    //     "getRoomTokenResponse",
+    //     (data) => {
+    //           print("...................getRoomTokenResponse : " + data),
+    //           Provider.of<gameProvider>(context, listen: false)
+    //               .setRoomToken(data.toString()),
+    //           widget.socket.emit("startGame", widget.roomId),
+    //           setState(() {
+    //             roomToken = Provider.of<gameProvider>(context, listen: false)
+    //                 .getRoomToken();
+    //             print("room Token ++++++++++++++++++++++" + roomToken);
+    //           }),
+    //           _isLoading1 = false
+    //         });
 
-    widget.socket.on("startGameResponse",
-        (data) => {
-              print("got startGameResponse... + " + data.toString()),
-              Provider.of<gameProvider>(context, listen: false)
-                  .setCurrentTurn(data, widget.socket.id.toString()),
-            });
+    // widget.socket.on(
+    //     "startGameResponse",
+    //     (data) => {
+    //           print("got startGameResponse... + " + data.toString()),
+    //           Provider.of<gameProvider>(context, listen: false)
+    //               .setCurrentTurn(data, widget.socket.id.toString()),
+    //         });
 
-    widget.socket.on("nextTurnResponse",
-        (data) => {
-              print("got nextTurnResponse...+ " + data.toString()),
-              Provider.of<gameProvider>(context, listen: false)
-                  .setCurrentTurn(data, widget.socket.id.toString()),
-              startTimer(),
-            });
+    // widget.socket.on(
+    //     "nextTurnResponse",
+    //     (data) => {
+    //           print("got nextTurnResponse...+ " + data.toString()),
+    //           Provider.of<gameProvider>(context, listen: false)
+    //               .setCurrentTurn(data, widget.socket.id.toString()),
+    //           startTimer(),
+    //         });
 
-    widget.socket.on("choseWordResponse",
-        (data) => {
-              print("got choseWordResponse...+ " + data.toString()),
-              Provider.of<gameProvider>(context, listen: false)
-                  .setselectedWord(data),
-            });
+    // widget.socket.on(
+    //     "choseWordResponse",
+    //     (data) => {
+    //           print("got choseWordResponse...+ " + data.toString()),
+    //           Provider.of<gameProvider>(context, listen: false)
+    //               .setselectedWord(data),
+    //         });
 
-    widget.socket.on("receiveMessage",
-        (data) => {
-              Provider.of<gameProvider>(context, listen: false)
-                  .addNewMessage(data),
-            });
+    // widget.socket.on(
+    //     "receiveMessage",
+    //     (data) => {
+    //           Provider.of<gameProvider>(context, listen: false)
+    //               .addNewMessage(data),
+    //         });
   }
 
-  void getRooomUUID(String sdkToken) async {
-    print("getRooomUUID : " + sdkToken);
+  // void getRooomUUID(String sdkToken) async {
+  //   print("getRooomUUID : " + sdkToken);
 
-    var response = await http.post(Uri.https('api.netless.link', 'v5/rooms'),
-        headers: {'token': sdkToken.toString(), 'region': 'in-mum'});
-    var jsonResponse =
-        convert.jsonDecode(response.body) as Map<String, dynamic>;
-    print('Response referencestatus: ${response.statusCode}');
-    print('Response body: ${response.body}');
-    print("UUID: " + jsonResponse['uuid']);
-    roomUUID = jsonResponse['uuid'];
-    widget.socket.emit("getRoomToken", roomUUID);
-  }
+  //   var response = await http.post(Uri.https('api.netless.link', 'v5/rooms'),
+  //       headers: {'token': sdkToken.toString(), 'region': 'in-mum'});
+  //   var jsonResponse =
+  //       convert.jsonDecode(response.body) as Map<String, dynamic>;
+  //   print('Response referencestatus: ${response.statusCode}');
+  //   print('Response body: ${response.body}');
+  //   print("UUID: " + jsonResponse['uuid']);
+  //   roomUUID = jsonResponse['uuid'];
+  //   widget.socket.emit("getRoomToken", roomUUID);
+  // }
 
   Future<void> onFastRoomCreated(FastRoomController controller) async {
-    _isLoading2 = false;
-    startTimer();
     controllerCompleter.complete(controller);
+    startTimer();
+    _isLoading2 = false;
+    // print("_isLoading2 = false");
   }
 
   @override
@@ -202,22 +233,50 @@ class _gameScreenState extends State<gameScreen> {
               child: Stack(children: [
                 Column(
                   children: [
-                    Container(
-                      height: MediaQuery.of(context).size.height * 0.7,
-                      width: MediaQuery.of(context).size.width,
-                      child: FastRoomView(
-                        fastRoomOptions: FastRoomOptions(
-                          appId: appId,
-                          uuid: roomUUID,
-                          token: roomToken,
-                          uid: widget.socket.id.toString(),
-                          writable: true,
-                          fastRegion: FastRegion.in_mum,
-                        ),
-                        onFastRoomCreated: onFastRoomCreated,
-                        useDarkTheme: false,
-                      ),
-                    ),
+                    Selector<roomProvider, whiteBoardCredentials?>(
+                        builder: (context, credentials, __) {
+                          return credentials == null
+                              ? Container()
+                              : Container(
+                                  height:
+                                      MediaQuery.of(context).size.height * 0.7,
+                                  width: MediaQuery.of(context).size.width,
+                                  child: FastRoomView(
+                                    fastRoomOptions: FastRoomOptions(
+                                      appId: appId,
+                                      uuid: credentials.roomUUID,
+                                      token: credentials.roomToken,
+                                      uid: widget.socket.id.toString(),
+                                      writable: true,
+                                      fastRegion: FastRegion.in_mum,
+                                    ),
+                                    onFastRoomCreated: onFastRoomCreated,
+                                    useDarkTheme: false,
+                                  ),
+                                  // child: Text("whiteboard"),
+                                  // color: Colors.red,
+                                );
+                        },
+                        selector: (_, provider) =>
+                            provider.whiteboardCredentials),
+                    // Container(
+                    //   height: MediaQuery.of(context).size.height * 0.7,
+                    //   width: MediaQuery.of(context).size.width,
+                    //   child: FastRoomView(
+                    //     fastRoomOptions: FastRoomOptions(
+                    //       appId: appId,
+                    //       uuid: roomUUID,
+                    //       token: roomToken,
+                    //       uid: widget.socket.id.toString(),
+                    //       writable: true,
+                    //       fastRegion: FastRegion.in_mum,
+                    //     ),
+                    //     onFastRoomCreated: onFastRoomCreated,
+                    //     useDarkTheme: false,
+                    //   ),
+                    //   // child: Text("whiteboard"),
+                    //   color: Colors.red,
+                    // ),
                     Spacer()
                   ],
                 ),
@@ -227,6 +286,7 @@ class _gameScreenState extends State<gameScreen> {
                       future: controllerCompleter.future,
                       builder: (context, snapshot) {
                         if (snapshot.hasData) {
+                          // if (true) {
                           _isFastRoomCompleted = true;
                           fastRoomController = snapshot.data!;
 
@@ -246,9 +306,18 @@ class _gameScreenState extends State<gameScreen> {
                                       MainAxisAlignment.spaceBetween,
                                   crossAxisAlignment: CrossAxisAlignment.center,
                                   children: [
-                                    Consumer<gameProvider>(
+                                    Consumer<roomProvider>(
                                       builder: (context, provider, child) {
-                                        if (provider.yourTurn == true) {
+                                        print("current turn");
+                                        print(provider.currentRoom!.roomPlayers[
+                                            provider.currentRoom!
+                                                .currentTurn]["playerName"]);
+                                        // if (provider.currentRoom!["yourTurn"] == true) {
+                                        if (provider.currentRoom!.roomPlayers[
+                                                    provider.currentRoom!
+                                                        .currentTurn]
+                                                ["playerSocketId"] ==
+                                            widget.socket.id) {
                                           return selectedWord == ''
                                               ? Row(
                                                   children: [
@@ -385,9 +454,12 @@ class _gameScreenState extends State<gameScreen> {
                                               padding: EdgeInsets.symmetric(
                                                   horizontal: 8),
                                               alignment: Alignment.topLeft,
-                                              child: Consumer<gameProvider>(
+                                              child: Consumer<roomProvider>(
                                                   builder: (_, provider, __) {
-                                                print(provider.messages);
+                                                // print(provider.currentRoom!
+                                                //     .roomMessages);
+                                                final roomMessages = provider
+                                                    .currentRoom!.roomMessages;
                                                 return ListView.separated(
                                                   separatorBuilder:
                                                       (context, index) =>
@@ -395,11 +467,11 @@ class _gameScreenState extends State<gameScreen> {
                                                     height: 3,
                                                   ),
                                                   itemCount:
-                                                      provider.messages.length,
+                                                      roomMessages.length,
                                                   itemBuilder:
                                                       (context, index) {
-                                                    final player = provider
-                                                        .messages[index];
+                                                    final player =
+                                                        roomMessages[index];
                                                     return player.msg.contains(
                                                                 "guessed correct word") ||
                                                             player.msg ==
@@ -468,15 +540,15 @@ class _gameScreenState extends State<gameScreen> {
                                                               Colors.deepPurple,
                                                         ),
                                                         onPressed: () {
-                                                          widget.socket.emit(
-                                                              "sendMessage", {
-                                                            "roomId":
-                                                                widget.roomId,
-                                                            "message":
-                                                                textFieldController
-                                                                    .text
-                                                                    .trim()
-                                                          });
+                                                          // widget.socket.emit(
+                                                          //     "sendMessage", {
+                                                          //   "roomId":
+                                                          //       widget.roomId,
+                                                          //   "message":
+                                                          //       textFieldController
+                                                          //           .text
+                                                          //           .trim()
+                                                          // });
                                                           textFieldController
                                                               .clear();
                                                         },
@@ -497,13 +569,13 @@ class _gameScreenState extends State<gameScreen> {
                         }
                       }),
                 ),
-                if (_isLoading2)
-                  Container(
-                    color: Colors.white,
-                    height: MediaQuery.of(context).size.height,
-                    width: MediaQuery.of(context).size.width,
-                    child: Center(child: CircularProgressIndicator()),
-                  )
+                // if (_isLoading2)
+                //   Container(
+                //     color: Colors.white,
+                //     height: MediaQuery.of(context).size.height,
+                //     width: MediaQuery.of(context).size.width,
+                //     child: Center(child: Text("Loading Whiteboard..")),
+                //   )
               ]),
             ),
     );

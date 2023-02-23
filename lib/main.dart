@@ -1,13 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:scribble/providers/game_provider.dart';
 import 'package:scribble/providers/room_provider.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 import 'dart:io';
 import 'package:provider/provider.dart';
 import 'screens/home_screen.dart';
 import 'screens/lobby_screen.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
-void main() {
-  runApp(const MyApp());
+Future main() async {
+  await dotenv.load(fileName: '.env');
+  runApp(MultiProvider(providers: [
+    ChangeNotifierProvider(create: (_) => roomProvider()),
+    ChangeNotifierProvider(create: (_) => gameProvider()),
+  ], child: MyApp()));
 }
 
 class MyApp extends StatelessWidget {
@@ -20,10 +26,13 @@ class MyApp extends StatelessWidget {
         theme: ThemeData(
           primarySwatch: Colors.blue,
         ),
-        home: ChangeNotifierProvider(
-            create: (context) => roomProvider(), child: homeScreen()),
+        home: homeScreen(),
+        // initialRoute: "/homeScreen",
+        // home: ChangeNotifierProvider(
+        //     create: (context) => roomProvider(), child: homeScreen()),
         routes: {
           homeScreen.Routename: (ctx) => homeScreen(),
+
           // lobbyScreen.Routename: ((context) => lobbyScreen()),
         });
   }
