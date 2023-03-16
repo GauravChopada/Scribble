@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:scribble/models/message.dart';
 import 'package:scribble/models/whiteBoardCredentials.dart';
 import '../models/player.dart';
 import '../models/room.dart';
@@ -14,6 +15,7 @@ class roomProvider extends ChangeNotifier {
         roomName: payload["roomName"],
         createdBy: payload["createdBy"],
         currentChosenWord: payload["currentChosenWord"],
+        currentTurnPID: payload["currentTurnPID"],
         currentTurn: payload["currentTurn"],
         gameStarted: payload["gameStarted"],
         roomMessages: payload["roomMessages"],
@@ -25,6 +27,7 @@ class roomProvider extends ChangeNotifier {
     _currentRoom = Room(
         roomId: payload["roomId"],
         roomName: payload["roomName"],
+        currentTurnPID: payload["currentTurnPID"],
         createdBy: payload["createdBy"],
         currentChosenWord: payload["currentChosenWord"],
         currentTurn: payload["currentTurn"],
@@ -42,6 +45,26 @@ class roomProvider extends ChangeNotifier {
 
   clearRoomData() {
     _currentRoom = null;
+    notifyListeners();
+  }
+
+  setCurrentTurn(payload) {
+    currentRoom!.currentTurn = payload["currentTurnIndex"];
+    currentRoom!.currentTurnPID = payload["currentTurnPID"];
+    // print("curentTurn" + currentRoom!.currentTurnPID.toString());
+    notifyListeners();
+  }
+
+  setChosenWord(payload) {
+    currentRoom!.currentChosenWord = payload;
+    notifyListeners();
+  }
+
+  addMessage(payload) {
+    currentRoom!.roomMessages.add(Message(
+      playerName: payload["playerName"],
+      message: payload["message"],
+    ));
     notifyListeners();
   }
 

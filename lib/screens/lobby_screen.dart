@@ -1,8 +1,5 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:scribble/providers/game_provider.dart';
 import 'package:scribble/providers/room_provider.dart';
 import 'package:scribble/screens/game_screen.dart';
 import 'package:scribble/screens/home_screen.dart';
@@ -10,7 +7,6 @@ import 'dart:async';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 import 'dart:convert';
 import 'package:flutter/services.dart';
-import '../models/player.dart';
 
 class lobbyScreen extends StatefulWidget {
   static const Routename = '/lobbyScreen';
@@ -22,20 +18,7 @@ class lobbyScreen extends StatefulWidget {
   State<lobbyScreen> createState() => _lobbyScreenState();
 }
 
-// class StreamSocket {
-//   final _socketResponse = StreamController<String>();
-
-//   void Function(String) get addResponse => _socketResponse.sink.add;
-
-//   Stream<String> get getResponse => _socketResponse.stream;
-
-//   void dispose() {
-//     _socketResponse.close();
-//   }
-// }
-
 class _lobbyScreenState extends State<lobbyScreen> {
-  String test = "x";
   var response;
 
   showSnackBar(String message, Color color) {
@@ -52,43 +35,6 @@ class _lobbyScreenState extends State<lobbyScreen> {
   void initState() {
     super.initState();
 
-    // widget.socket.emit("getRoomData", widget.roomId);
-
-    // widget.socket.on(
-    //     "test",
-    //     (data) => {
-    //           Provider.of<roomProvider>(context, listen: false)
-    //               .setMsg(data.toString())
-    //         });
-
-    // widget.socket.on(
-    //     "success",
-    //     (data) => {
-    //           print(data),
-    //           Provider.of<roomProvider>(context, listen: false)
-    //               .setMsg(data.toString())
-    //         });
-
-    // widget.socket.emit("getPlayers", widget.roomId);
-
-    // widget.socket.on("gameStarted", (data) => {});
-
-    // widget.socket.on(
-    //     "roomJoined",
-    //     (data) => {
-    //           print("..................." + data),
-    //           Provider.of<roomProvider>(context, listen: false)
-    //               .addNewPlayer(data)
-    //           // Provider.of<roomProvider>(context, listen: false)
-    //           //     .setMsg(data.toString())
-    //         });
-
-    // widget.socket.onDisconnect((payload) => {
-    //       print(payload),
-    //       ScaffoldMessenger.of(context)
-    //           .showSnackBar(showSnackBar("Connection Lost to server..")),
-    //       Navigator.of(context).pushNamed(homeScreen.Routename)
-    //     });abc
     widget.socket.on(
         "/getRoomPlayersResponse",
         (payload) => {
@@ -144,8 +90,7 @@ class _lobbyScreenState extends State<lobbyScreen> {
                   Provider.of<roomProvider>(context, listen: false)
                       .refreshPlayersData(response["data"]),
                   ScaffoldMessenger.of(context).showSnackBar(showSnackBar(
-                      response["player"]["playerName"].toString() +
-                          " left room.",
+                      "${response["player"]["playerName"]} left room.",
                       Colors.red))
                 }
               else if (response["status"] == 400)
@@ -231,8 +176,8 @@ class _lobbyScreenState extends State<lobbyScreen> {
         return (await showDialog(
               context: context,
               builder: (context) => AlertDialog(
-                title: Text('Are you sure?'),
-                content: Text('Do you want to leave this room ?'),
+                title: const Text('Are you sure?'),
+                content: const Text('Do you want to leave this room ?'),
                 actions: <Widget>[
                   TextButton(
                     onPressed: () {
@@ -266,14 +211,13 @@ class _lobbyScreenState extends State<lobbyScreen> {
                 const SizedBox(
                   height: 60,
                 ),
-
                 Row(
                   children: [
                     const SizedBox(
                       width: 30,
                     ),
                     Text(
-                      "Room: " + currentRoom!.roomName,
+                      "Room: ${currentRoom!.roomName}",
                       style:
                           TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
                     ),
@@ -284,12 +228,12 @@ class _lobbyScreenState extends State<lobbyScreen> {
                               {"roomId": currentRoom.roomId});
                         },
                         icon: Icon(Icons.refresh_rounded)),
-                    SizedBox(
+                    const SizedBox(
                       width: 10,
                     )
                   ],
                 ),
-                SizedBox(
+                const SizedBox(
                   height: 10,
                 ),
                 InkWell(
@@ -328,7 +272,7 @@ class _lobbyScreenState extends State<lobbyScreen> {
                             ),
                           ],
                         ),
-                        Icon(
+                        const Icon(
                           Icons.copy,
                           size: 24,
                         )
@@ -336,7 +280,7 @@ class _lobbyScreenState extends State<lobbyScreen> {
                     ),
                   ),
                 ),
-                SizedBox(
+                const SizedBox(
                   height: 10,
                 ),
                 Expanded(
@@ -356,10 +300,6 @@ class _lobbyScreenState extends State<lobbyScreen> {
                     ));
                   },
                 )),
-
-                // Selector<roomProvider, String>(
-                //     selector: (_, provider) => provider.msg,
-                //     builder: (_, msg, __) => msg != '' ? Text(msg) : Container()),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.center,
@@ -369,25 +309,16 @@ class _lobbyScreenState extends State<lobbyScreen> {
                         onPressed: () {
                           widget.socket.emit(
                               "/startGame", {"roomId": currentRoom.roomId});
-                          // Navigator.push(
-                          //   context,
-                          //   MaterialPageRoute(
-                          //     builder: (_) => gameScreen(
-                          //       socket: widget.socket,
-                          //       // roomId: widget.roomId,
-                          //     ),
-                          //   ),
-                          // );
                         },
                         child: Container(
                             width: 150,
-                            padding: EdgeInsets.all(15),
+                            padding: const EdgeInsets.all(15),
                             // margin: EdgeInsets.all(10),
                             decoration: BoxDecoration(
                                 color: Colors.blue[100],
                                 borderRadius: BorderRadius.circular(30)),
                             child: Center(child: Text("Start Game")))),
-                    Spacer(),
+                    const Spacer(),
                     TextButton(
                         // style: ButtonStyle(backgroundColor: Colors.blue),
                         onPressed: () {
@@ -395,12 +326,12 @@ class _lobbyScreenState extends State<lobbyScreen> {
                         },
                         child: Container(
                             width: 150,
-                            padding: EdgeInsets.all(15),
-                            margin: EdgeInsets.all(10),
+                            padding: const EdgeInsets.all(15),
+                            margin: const EdgeInsets.all(10),
                             decoration: BoxDecoration(
                                 color: Colors.red[100],
                                 borderRadius: BorderRadius.circular(30)),
-                            child: Center(
+                            child: const Center(
                                 child: Text(
                               "Leave Room",
                               style: TextStyle(color: Colors.red),
@@ -408,7 +339,7 @@ class _lobbyScreenState extends State<lobbyScreen> {
                     Spacer()
                   ],
                 ),
-                SizedBox(
+                const SizedBox(
                   height: 30,
                 )
               ],

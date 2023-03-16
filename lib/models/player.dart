@@ -8,12 +8,4 @@ class Player {
     required this.room,
     required this.socketId,
   });
-
-  // factory Player.fromJson(Map<String, dynamic> player) {
-  //   return Player(
-  //       // playerName: player['playerName'],
-  //       room: player['roomId']
-  //       // socketId: player['socketId']
-  //       );
-  // }
 }

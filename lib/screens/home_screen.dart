@@ -1,14 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:scribble/models/room.dart';
 import 'package:scribble/providers/room_provider.dart';
 import './lobby_screen.dart';
-import 'dart:io';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'dart:convert';
-import 'package:http/http.dart' as http;
-import 'dart:convert' as convert;
 
 class homeScreen extends StatefulWidget {
   static const Routename = '/homeScreen';
@@ -34,13 +30,27 @@ class _homeScreenState extends State<homeScreen> {
     );
   }
 
+  void socketConnect() {
+    socket = IO.io(dotenv.env['SERVER_URL'], <String, dynamic>{
+      "transports": ["websocket"],
+      "autoConnect": false
+    });
+    socket.connect();
+
+    socket.onConnect((data) => {
+          // ignore: avoid_print
+          print("connected to socket: ${socket.id}"),
+          ScaffoldMessenger.of(context).showSnackBar(
+              showSnackBar("Connected to Server..", Colors.green)),
+        });
+  }
+
   @override
   void initState() {
     super.initState();
-    connect();
+    socketConnect();
 
     socket.onDisconnect((payload) => {
-          print(payload),
           ScaffoldMessenger.of(context).showSnackBar(
               showSnackBar("Connection Lost to server..", Colors.red)),
           Provider.of<roomProvider>(context, listen: false).clearRoomData(),
@@ -95,7 +105,6 @@ class _homeScreenState extends State<homeScreen> {
                 }
               else if (response["status"] == 400)
                 {
-                  print(response["message"]),
                   ScaffoldMessenger.of(context).showSnackBar(
                       showSnackBar(response["message"], Colors.red))
                 }
@@ -105,20 +114,6 @@ class _homeScreenState extends State<homeScreen> {
                       showSnackBar("Error.. Could not join room", Colors.red))
                 }
             });
-  }
-
-  void connect() {
-    socket = IO.io(dotenv.env['SERVER_URL'], <String, dynamic>{
-      "transports": ["websocket"],
-      "autoConnect": false
-    });
-    socket.connect();
-
-    socket.onConnect((data) => {
-          print("connected to socket: " + socket.id.toString()),
-          ScaffoldMessenger.of(context).showSnackBar(
-              showSnackBar("Connected to Server..", Colors.green)),
-        });
   }
 
   @override
@@ -133,11 +128,11 @@ class _homeScreenState extends State<homeScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  Text(
+                  const Text(
                     "Scribble",
                     style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
                   ),
-                  SizedBox(
+                  const SizedBox(
                     height: 30,
                   ),
                   Padding(
@@ -151,11 +146,11 @@ class _homeScreenState extends State<homeScreen> {
                             decoration: InputDecoration(
                                 hintText: 'Player Name',
                                 focusedBorder: OutlineInputBorder(
-                                    borderSide: BorderSide(
+                                    borderSide: const BorderSide(
                                         color: Colors.deepPurple, width: 2.0),
                                     borderRadius: BorderRadius.circular(20)),
                                 border: OutlineInputBorder(
-                                    borderSide: BorderSide(
+                                    borderSide: const BorderSide(
                                         color: Colors.black, width: 2.0),
                                     borderRadius: BorderRadius.circular(20))),
                             // keyboardType: TextInputType.name,
@@ -167,7 +162,7 @@ class _homeScreenState extends State<homeScreen> {
                             },
                             textInputAction: TextInputAction.done,
                           ),
-                          SizedBox(
+                          const SizedBox(
                             height: 20,
                           ),
                           TextFormField(
@@ -175,11 +170,11 @@ class _homeScreenState extends State<homeScreen> {
                             decoration: InputDecoration(
                                 hintText: 'Room name',
                                 focusedBorder: OutlineInputBorder(
-                                    borderSide: BorderSide(
+                                    borderSide: const BorderSide(
                                         color: Colors.deepPurple, width: 2.0),
                                     borderRadius: BorderRadius.circular(20)),
                                 border: OutlineInputBorder(
-                                    borderSide: BorderSide(
+                                    borderSide: const BorderSide(
                                         color: Colors.black, width: 2.0),
                                     borderRadius: BorderRadius.circular(20))),
                             // keyboardType: TextInputType.name,
@@ -234,29 +229,6 @@ class _homeScreenState extends State<homeScreen> {
                       ],
                     ),
                   ),
-                  // Selector<roomProvider, Room?>(
-                  //     builder: (context, currentRoom, __) {
-                  //       return currentRoom == null
-                  //           ? Container()
-                  //           : Column(
-                  //               children: [
-                  //                 Text(currentRoom.roomId),
-                  //                 TextButton(
-                  //                     onPressed: () {
-                  //                       Navigator.push(
-                  //                         context,
-                  //                         MaterialPageRoute(
-                  //                           builder: (_) => lobbyScreen(
-                  //                             socket: socket,
-                  //                           ),
-                  //                         ),
-                  //                       );
-                  //                     },
-                  //                     child: Text("Enter Room")),
-                  //               ],
-                  //             );
-                  //     },
-                  //     selector: (_, provider) => provider.currentRoom)
                 ],
               )),
             ),

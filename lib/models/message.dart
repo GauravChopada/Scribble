@@ -1,11 +1,11 @@
 class Message {
-  final String sender;
-  final String msg;
-  // final String room;
+  final String playerName;
+  final String message;
+  // final String timeStamp;
 
   Message({
-    required this.sender,
-    required this.msg,
-    // required this.socketId,
+    required this.playerName,
+    required this.message,
+    // required this.timeStamp,
   });
 }
